@@ -24,4 +24,4 @@ Replace `/path_to_repo/` with the location of the repository clone. Note, the fi
 
 ### Author
 
-Seth Gorelik, 2020.
+Seth Gorelik (2020) unless otherwise stated.
