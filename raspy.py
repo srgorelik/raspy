@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# module for working with raster data
-# written by seth gorelik
+# functions for working with raster data
+# written by seth gorelik, 2020
 
 from osgeo import gdal, osr
 import numpy as np
