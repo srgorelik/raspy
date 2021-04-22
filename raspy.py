@@ -100,6 +100,24 @@ def dtype_gdal(dtype_str):
 	dtype_int = dtype_switcher.get(dtype_str, 0)
 	return dtype_int
 
+def dtype_bit_depth(dtype_str):
+	"""Get pixel bit depth from raster data type"""
+	bit_depth_switcher = {
+		"Byte" : 8,
+		"UInt16" : 16,
+		"Int16" : 16,
+		"UInt32" : 32,
+		"Int32" : 32,
+		"Float32" : 32,
+		"Float64" : 64,
+		"CInt16" : 16,
+		"CInt32" : 32,
+		"CFloat32" : 32,
+		"CFloat64" : 64
+	}
+	bit_depth = bit_depth_switcher.get(dtype_str, 0)
+	return bit_depth
+
 def r2n(raster_file, band = 1):
 	"""Load a raster from disk into a 2D numpy array in memory."""
 	print('WARNING: r2n() is depreciated, use raster() instead!', flush = True)
