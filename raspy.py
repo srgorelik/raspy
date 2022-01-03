@@ -149,7 +149,7 @@ def raster(raster_file, bands = None, verbose = False):
 	file = None
 	return arr
 	
-def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None):
+def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None, msg = False):
 	"""Write a 2D numpy image array to a GeoTIFF raster file on disk"""
 	
 	# check that output is a numpy array
@@ -163,7 +163,8 @@ def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None):
 		print('Error: output data type invalid', flush = True)
 		return
 
-	# write numpy array to raster
+	if msg == True: 
+		print('Writing {} ...'.format(out_tif), flush = True)
 	ndim = img_arr.ndim
 	nband = 1
 	nrow = img_arr.shape[0]
