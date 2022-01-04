@@ -5,6 +5,7 @@
 
 from osgeo import gdal, osr
 import numpy as np
+import subprocess as sp
 import os, inspect
 
 def get_nodata(raster_file, band = 1):
@@ -149,7 +150,7 @@ def raster(raster_file, bands = None, verbose = False):
 	file = None
 	return arr
 	
-def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None, msg = False):
+def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None, stats = True, msg = False):
 	"""Write a 2D numpy image array to a GeoTIFF raster file on disk"""
 	
 	# check that output is a numpy array
@@ -162,9 +163,8 @@ def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None, msg = False):
 	if dtype_int == 0:
 		print('Error: output data type invalid', flush = True)
 		return
-
-	if msg == True: 
-		print('Writing {} ...'.format(out_tif), flush = True)
+	
+	if msg: print('Writing {} ...'.format(out_tif), flush = True)
 	ndim = img_arr.ndim
 	nband = 1
 	nrow = img_arr.shape[0]
@@ -177,6 +177,8 @@ def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None, msg = False):
 	if (nodata != None) and (type(nodata) != str):
 		out_dataset.GetRasterBand(1).SetNoDataValue(nodata)
 	out_dataset = None
+	if stats: cmd_chk = sp.run(['gdal_edit.py', '-stats', out_tif])
+	return
 
 def stats(input, nodata = None):
 	"""Get descriptive statistics for either a raster on disk (input = filepath) or a numpy array stored in memory"""
