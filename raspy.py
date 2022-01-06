@@ -129,10 +129,12 @@ def r2n(raster_file, band = 1):
 
 def raster(raster_file, bands = None, verbose = False):
 	"""Load single- or multi-band raster from disk into a 2- or 3-dimensional numpy array in memory.\nNote, bands must be INTEGER or LIST of integers, e.g., [1, 3, 6] = Bands 1, 3 and 6. There is no Band 0."""
+	if verbose: print('Reading {} ...'.format(raster_file), flush = True)
 	file = gdal.Open(raster_file)
 	tot_band_cnt = file.RasterCount
 	if bands == None:
-		if verbose: print('Reading all {} bands ...'.format(tot_band_cnt), flush = True)
+		if (verbose) & (tot_band_cnt == 1): print('Raster has 1 band ...', flush = True)
+		if (verbose) & (tot_band_cnt > 1): print('Reading all {} bands ...'.format(tot_band_cnt), flush = True)
 		arr = file.ReadAsArray()
 	elif type(bands) == int: # in this case, "bands" refers to only one band
 		if verbose: print('Reading band {} of {} ...'.format(bands, tot_band_cnt), flush = True)
