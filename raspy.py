@@ -4,6 +4,8 @@
 # written by seth gorelik, 2020
 
 from osgeo import gdal, osr
+from matplotlib import colors, colormaps
+import matplotlib.pyplot as plt
 import numpy as np
 import subprocess as sp
 import os, inspect
@@ -228,6 +230,86 @@ def compare_rasters(r1, r2):
 		per_same = round(num_same/num_pxl*100, 2)
 		print('{}% of pixels are identical ({}/{} pixels)'.format(per_same, num_same, num_pxl), flush = True)
 		return
+
+def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', title = None, legend = True, close = True, axes = False):
+	"""
+	Plot a 2D numpy array with a color palette or a class dictionary for a categorical map.
+	"""
+	if not isinstance(img_arr, np.ndarray):
+		print('Error: input must be a numpy array.', flush = True)
+		return
+	if nodata is not None:
+		if isinstance(nodata, int):
+			mask = (img_arr == nodata)
+			img_arr = np.ma.masked_array(img_arr, mask)
+		else:
+			print('Error: nodata must be an integer.', flush = True)
+			return
+	if isinstance(pal, str):
+		# continuous data
+		if pal in colormaps:
+			cmap = plt.get_cmap(pal)
+		else:
+			cmap = plt.get_cmap('viridis')
+			print('"{}" is not a colormap option, using viridis instead...'.format(pal), flush = True)
+		cmap.set_bad(nodata_color)
+		plt.imshow(img_arr, cmap = cmap, interpolation = 'nearest')
+		if legend:
+			cbar = plt.colorbar(shrink = 0.6)
+			cbar.ax.tick_params(labelsize = 'small')
+	elif isinstance(pal, dict):
+		# categorical data, e.g., pal = {0: 'red', 1: 'black', 255: 'white'}
+		if not all(isinstance(key, int) and isinstance(value, str) for key, value in pal.items()):
+			print("Error: pal must be a dictionary with keys as integers and values as color strings.", flush = True)
+			return
+		class_values = sorted(pal.keys())
+		class_colors = [pal[value] for value in class_values]
+		nclasses = len(class_values)
+		
+		# set colormap 
+		cmap = colors.ListedColormap(class_colors)
+		cmap.set_bad(nodata_color)
+		
+		# define boundaries and normalizatio
+		bounds = [val - 0.5 for val in class_values] + [class_values[-1] + 0.5]
+		norm = colors.BoundaryNorm(bounds, ncolors = nclasses)
+		
+		# create plot
+		im = plt.imshow(img_arr, cmap = cmap, norm = norm)
+		
+		if legend:
+			# define midpoints of each boundary, and set labels
+			mids = [(bounds[i] + bounds[i + 1]) / 2 for i in range(len(bounds) - 1)]
+			
+			shrink = 0.1 * nclasses
+			cbar = plt.colorbar(im, cmap = cmap, ticks = mids, shrink = shrink, aspect = 3)
+			
+			# cbar = plt.colorbar(im, cmap = cmap, ticks = mids)
+			# height = 0.1 * nclasses
+			# bottom = 0.5 - (height/2)
+			# cbar.ax.set_position([0.85, bottom, 1, height]) # [left, bottom, width, height]
+			
+			cbar.ax.set_yticklabels(class_values, fontdict = {'fontsize': 'small'})
+			cbar.ax.tick_params(size = 0, pad = 5)
+			cbar.outline.set_visible(False)
+			cbar.ax.minorticks_off()
+			for bound in bounds:
+				cbar.ax.axhline(bound, color = 'white', linewidth = 4)
+	else:
+		print("Error: pal must be either a string or a dictionary.", flush = True)
+		return
+	if axes:
+		plt.axis('on')
+	else:
+		plt.axis('off')
+	if title is not None:
+		plt.title(title)
+	plt.show(block = False)
+	if close:
+		plt.close()
+	else:
+		print("\033[93mDon't forget to close plot with plt.close()\033[0m")
+
 
 # - - - - - - - - - - - 
 # additional misc tools
