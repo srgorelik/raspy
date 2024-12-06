@@ -4,6 +4,7 @@
 # written by seth gorelik, 2020
 
 from osgeo import gdal, osr
+from tabulate import tabulate
 from matplotlib import colors, colormaps
 import matplotlib.pyplot as plt
 import numpy as np
@@ -184,35 +185,29 @@ def write_gtiff(img_arr, out_tif, dtype, gt, sr, nodata = None, stats = True, ms
 	if stats: cmd_chk = sp.run(['gdal_edit.py', '-stats', out_tif])
 	return
 
-def stats(input, nodata = None):
-	"""Get descriptive statistics for either a raster on disk (input = filepath) or a numpy array stored in memory"""
-	if (type(input) != str) and (type(input) != np.ndarray):
-		print("Error: input must be either filepath to raster or numpy image array.", flush = True)
-		return
-	elif type(input) == str:
-		file = gdal.Open(input)
-		img = np.array(file.GetRasterBand(1).ReadAsArray())
-		nodata = file.GetRasterBand(1).GetNoDataValue()
-		img_data = img[img != nodata]
-		del img
-		img_min = np.min(img_data)
-		img_max = np.max(img_data)
-		img_mean = np.mean(img_data)
-		img_std = np.std(img_data)
-		file = None
-	else: # type(input) == np.ndarray
-		if nodata != None: input = input[input != nodata]
-		img_min = np.min(input)
-		img_max = np.max(input)
-		img_mean = np.mean(input)
-		img_std = np.std(input)
-	if nodata == None:
-		print("Min.\tMax.\tMean\tStd.", flush = True)
-		print("%2.2f\t%2.2f\t%2.2f\t%2.2f" % (img_min, img_max, img_mean, img_std), flush = True)
-		return
+def stats(img_arr, nodata = None, classes = False):
+	"""Get descriptive statistics for either a numpy array"""
+	if isinstance(img_arr, np.ndarray):
+		if nodata is not None:
+			img_arr = img_arr[img_arr != nodata]
+		if classes:
+			unique_classes, counts = np.unique(img_arr, return_counts = True)
+			proportions = (counts / img_arr.size) * 100
+			table_data = [
+				[cls, cnt, prp] for cls, cnt, prp in zip(unique_classes, counts, proportions)
+			]
+			table_data.append(["Total", counts.sum(), proportions.sum()])
+			headers = ["Class", "Count", "%"]
+			print(tabulate(table_data, headers = headers, tablefmt = "plain", floatfmt = ["", ".0f", ".1f"],), flush = True)
+		else:
+			img_min = np.min(img_arr)
+			img_max = np.max(img_arr)
+			img_mean = np.mean(img_arr)
+			img_std = np.std(img_arr)
+			stats_dict = {"Min.": img_min, "Max.": img_max, "Mean": img_mean, "Std.": img_std, "NoData": nodata}
+			print(tabulate([stats_dict], headers = "keys", tablefmt = "plain", floatfmt = "2.2f", missingval = "-"), flush = True)
 	else:
-		print("Min.\tMax.\tMean\tStd.\tNoData", flush = True)
-		print("%2.2f\t%2.2f\t%2.2f\t%2.2f\t%i" % (img_min, img_max, img_mean, img_std, nodata), flush = True)
+		print("Error: input must be a numpy array.", flush = True)
 		return
 
 def compare_rasters(r1, r2):
