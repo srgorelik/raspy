@@ -191,12 +191,12 @@ def stats(img_arr, nodata = None, classes = False):
 		if nodata is not None:
 			img_arr = img_arr[img_arr != nodata]
 		if classes:
-			unique_classes, counts = np.unique(img_arr, return_counts = True)
-			proportions = (counts / img_arr.size) * 100
+			vals, cnts = np.unique(img_arr, return_counts = True)
+			props = (cnts / img_arr.size) * 100
 			table_data = [
-				[cls, cnt, prp] for cls, cnt, prp in zip(unique_classes, counts, proportions)
+				[cls, cnt, prp] for cls, cnt, prp in zip(vals, cnts, props)
 			]
-			table_data.append(["Total", counts.sum(), proportions.sum()])
+			table_data.append(["Total", cnts.sum(), props.sum()])
 			headers = ["Class", "Count", "%"]
 			print(tabulate(table_data, headers = headers, tablefmt = "plain", floatfmt = ["", ".0f", ".1f"],), flush = True)
 		else:
@@ -226,7 +226,7 @@ def compare_rasters(r1, r2):
 		print('{}% of pixels are identical ({}/{} pixels)'.format(per_same, num_same, num_pxl), flush = True)
 		return
 
-def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', title = None, legend = True, close = True, axes = False):
+def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', zmin = None, zmax = None, title = None, legend = True, units = None, close = True, axes = False):
 	"""
 	Plot a 2D numpy array with a color palette or a class dictionary for a categorical map.
 	"""
@@ -240,6 +240,20 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', title 
 		else:
 			print('Error: nodata must be an integer.', flush = True)
 			return
+	zmin_use = False
+	zmax_use = False
+	if zmin is not None:
+		if isinstance(zmin, int):
+			zmin_use = (zmin > np.min(img_arr))
+		else:
+			print('Error: zmin must be an integer.', flush = True)
+			return
+	if zmax is not None:
+		if isinstance(zmax, int):
+			zmax_use = (zmax < np.max(img_arr))
+		else:
+			print('Error: zmax must be an integer.', flush = True)
+			return
 	if isinstance(pal, str):
 		# continuous data
 		if pal in colormaps:
@@ -248,10 +262,23 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', title 
 			cmap = plt.get_cmap('viridis')
 			print('"{}" is not a colormap option, using viridis instead...'.format(pal), flush = True)
 		cmap.set_bad(nodata_color)
-		plt.imshow(img_arr, cmap = cmap, interpolation = 'nearest')
+		plt.imshow(img_arr, cmap = cmap, interpolation = 'nearest', vmin = zmin, vmax = zmax)
 		if legend:
-			cbar = plt.colorbar(shrink = 0.6)
+			if zmin_use and zmax_use:
+				extend = 'both'
+			elif not zmin_use and zmax_use:
+				extend = 'max'
+			elif zmin_use and not zmax_use:
+				extend = 'min'
+			else:
+				extend = 'neither'
+			cbar = plt.colorbar(shrink = 0.6, extend = extend)
 			cbar.ax.tick_params(labelsize = 'small')
+			if units is not None:
+				cbar.ax.set_ylabel(units, rotation = 270, labelpad = 20, fontsize = 'medium')
+		if nodata is not None:
+			if (nodata >= np.min(img_arr)) & (nodata <= np.max(img_arr)):
+				cbar.ax.axhline(nodata, color = nodata_color, linewidth = 1)
 	elif isinstance(pal, dict):
 		# categorical data, e.g., pal = {0: 'red', 1: 'black', 255: 'white'}
 		if not all(isinstance(key, int) and isinstance(value, str) for key, value in pal.items()):
@@ -298,7 +325,7 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', title 
 	else:
 		plt.axis('off')
 	if title is not None:
-		plt.title(title)
+		plt.title(title, pad = 20)
 	plt.show(block = False)
 	if close:
 		plt.close()
