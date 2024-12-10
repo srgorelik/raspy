@@ -262,7 +262,7 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', zmin =
 			cmap = plt.get_cmap('viridis')
 			print('"{}" is not a colormap option, using viridis instead...'.format(pal), flush = True)
 		cmap.set_bad(nodata_color)
-		plt.imshow(img_arr, cmap = cmap, interpolation = 'nearest', vmin = zmin, vmax = zmax)
+		plt.imshow(img_arr, cmap = cmap, vmin = zmin, vmax = zmax)
 		if legend:
 			if zmin_use and zmax_use:
 				extend = 'both'
