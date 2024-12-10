@@ -262,7 +262,7 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', zmin =
 			cmap = plt.get_cmap('viridis')
 			print('"{}" is not a colormap option, using viridis instead...'.format(pal), flush = True)
 		cmap.set_bad(nodata_color)
-		plt.imshow(img_arr, cmap = cmap, vmin = zmin, vmax = zmax)
+		plt.imshow(img_arr, cmap = cmap, vmin = zmin, vmax = zmax, interpolation = 'bilinear')
 		if legend:
 			if zmin_use and zmax_use:
 				extend = 'both'
@@ -297,7 +297,7 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', zmin =
 		norm = colors.BoundaryNorm(bounds, ncolors = nclasses)
 		
 		# create plot
-		im = plt.imshow(img_arr, cmap = cmap, norm = norm)
+		im = plt.imshow(img_arr, cmap = cmap, norm = norm, interpolation = 'nearest')
 		
 		if legend:
 			# define midpoints of each boundary, and set labels
