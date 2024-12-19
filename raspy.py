@@ -332,6 +332,105 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', zmin =
 	else:
 		print("\033[93mDon't forget to close plot with plt.close()\033[0m")
 
+def write_rat(src_file, rad, src_band = 1):
+	"""
+	Write a Raster Attribute Table (RAT) to a GeoTIFF raster file on disk
+	
+	Parameters:
+		src_file (str): input raster file
+		rad (dict): dictionary containing pixel values as keys and decriptions as values
+		src_band (int): which band to write the RAT to
+	
+	"""
+	if not isinstance(src_file, str):
+		print('Error: src_file must be a string.', flush = True)
+		return
+	if not isinstance(rad, dict):
+		print('Error: rad must be an dictionary.', flush = True)
+		return
+	if not isinstance(src_band, int):
+		print('Error: src_band must be an integer.', flush = True)
+		return
+	
+	# open source band
+	ds = gdal.Open(src_file, gdal.GA_Update)
+	band = ds.GetRasterBand(src_band)
+	
+	# create attribute table
+	rat = gdal.RasterAttributeTable()
+	rat.CreateColumn('Value', gdal.GFT_Integer, gdal.GFU_Generic)
+	rat.CreateColumn('Description', gdal.GFT_String, gdal.GFU_Generic)
+
+	# populate table with keys and values from input dictionary	
+	nclasses = len(rad)
+	keys = list(rad.keys())
+	vals = list(rad.values())
+	rat.SetRowCount(nclasses)
+	for i in range(nclasses):
+		rat.SetValueAsInt(i, 0, keys[i]) # row, col, val
+		rat.SetValueAsString(i, 1, vals[i]) # row, col, val
+	
+	# add the table to the band
+	band.SetDefaultRAT(rat)
+	
+	# cleanup
+	band.FlushCache()
+	del ds, band
+
+def write_rct(src_file, rcd, src_band = 1):
+	"""
+	Write a Raster Color Table (RCT) to a GeoTIFF raster file on disk
+	
+	Parameters:
+		src_file (str): input raster file
+		rcd (dict): dictionary containing pixel values as keys and colors as values
+		src_band (int): which band to write the RCD to
+	
+	"""
+	if not isinstance(src_file, str):
+		print('Error: src_file must be a string.', flush = True)
+		return
+	if not isinstance(rcd, dict):
+		print('Error: rcd must be an dictionary.', flush = True)
+		return
+	if not isinstance(src_band, int):
+		print('Error: src_band must be an integer.', flush = True)
+		return
+	
+	# open source band
+	ds = gdal.Open(src_file, gdal.GA_Update)
+	band = ds.GetRasterBand(src_band)
+	
+	# create color table
+	color_table = gdal.ColorTable()
+	
+	# populate table with keys and values from input dictionary	
+	for pixel_value, hex_code in rcd.items():
+		rgb_tuple = hex2rgb(hex_code)
+		color_table.SetColorEntry(pixel_value, rgb_tuple)
+	
+	# add color table to raster, and set color interpretation
+	band.SetRasterColorTable(color_table)
+	band.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+	
+	# cleanup
+	band.FlushCache()
+	del band, ds
+
+
+def delete_rct(src_file, src_band = 1):
+	
+	# open source band
+	ds = gdal.Open(src_file, gdal.GA_Update)
+	band = ds.GetRasterBand(src_band)
+	
+	# add color table to raster, and set color interpretation
+	band.SetRasterColorTable(None)
+	band.SetRasterColorInterpretation(gdal.GCI_GrayIndex)
+	
+	# cleanup
+	band.FlushCache()
+	del band, ds
 
 # - - - - - - - - - - - 
 # additional misc tools
@@ -348,5 +447,13 @@ def pcode(function):
 def check():
 	modname = os.path.splitext(os.path.basename(os.path.abspath(__file__)))[0]
 	print('{} loaded'.format(modname), flush = True)
+
+def hex2rgb(hex_str):
+	"""
+	Convert Hex color code (str) to RGB value (tuple)
+	Source: https://stackoverflow.com/a/29643643
+	"""
+	h = hex_str.lstrip('#')
+	return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
 
