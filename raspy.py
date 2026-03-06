@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # functions for working with raster data
 # written by seth gorelik, 2020
 
@@ -289,30 +287,30 @@ def plot(img_arr, pal = 'viridis', nodata = None, nodata_color = 'black', zmin =
 		class_values = sorted(pal.keys())
 		class_colors = [pal[value] for value in class_values]
 		nclasses = len(class_values)
-		
-		# set colormap 
+
+		# set colormap
 		cmap = colors.ListedColormap(class_colors)
 		cmap.set_bad(nodata_color)
-		
+
 		# define boundaries and normalizatio
 		bounds = [val - 0.5 for val in class_values] + [class_values[-1] + 0.5]
 		norm = colors.BoundaryNorm(bounds, ncolors = nclasses)
-		
+
 		# create plot
 		im = plt.imshow(img_arr, cmap = cmap, norm = norm, interpolation = 'nearest')
-		
+
 		if legend:
 			# define midpoints of each boundary, and set labels
 			mids = [(bounds[i] + bounds[i + 1]) / 2 for i in range(len(bounds) - 1)]
-			
+
 			shrink = 0.1 * nclasses
 			cbar = plt.colorbar(im, cmap = cmap, ticks = mids, shrink = shrink, aspect = 3)
-			
+
 			# cbar = plt.colorbar(im, cmap = cmap, ticks = mids)
 			# height = 0.1 * nclasses
 			# bottom = 0.5 - (height/2)
 			# cbar.ax.set_position([0.85, bottom, 1, height]) # [left, bottom, width, height]
-			
+
 			cbar.ax.set_yticklabels(class_values, fontdict = {'fontsize': 'small'})
 			cbar.ax.tick_params(size = 0, pad = 5)
 			cbar.outline.set_visible(False)
